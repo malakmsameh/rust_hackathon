@@ -1,0 +1,198 @@
+# ESP32-C3 CSI Collection - Quick Reference Card
+
+## Flash & Connect (One-Time Setup)
+
+```bash
+# Build
+cargo build --release --features=esp32c3 --target=riscv32imc-unknown-none-elf --bin async_main
+
+# Flash
+espflash flash --monitor target/riscv32imc-unknown-none-elf/release/async_main --port /dev/ttyUSB0
+
+# Or single command
+cargo run --release --features=esp32c3 --target=riscv32imc-unknown-none-elf --bin async_main
+```
+
+## Connect to Device (Every Time)
+
+```bash
+espflash monitor --port /dev/ttyUSB0
+```
+
+---
+
+## Essential Commands (In Monitor)
+
+### View Configuration
+```
+show-config
+```
+
+### Configure WiFi
+```bash
+# Passive sniffer on channel 6
+set-wifi --mode=sniffer --set-channel=6
+
+# Connect to existing WiFi
+set-wifi --mode=station --sta-ssid=WiFiName --sta-password=Password --set-channel=6
+
+# Create access point
+set-wifi --mode=ap --ap-ssid=MyAP --ap-password=Pass123 --max-connections=5
+
+# Dual mode (AP + Station)
+set-wifi --mode=ap-station --ap-ssid=MyAP --ap-password=Pass --sta-ssid=Home --sta-password=Pwd
+```
+
+### Configure CSI Features
+```bash
+set-csi --disable-htltf --disable-stbc-htltf    # Disable HTLTF and STBC
+set-csi                                           # Enable all features (default)
+```
+
+### Generate Traffic
+```bash
+set-traffic --frequency-hz=10    # 10 packets/sec
+set-traffic --frequency-hz=0     # Disable (default)
+```
+
+### Start Collection
+```bash
+start                   # Collect indefinitely
+start --duration=60     # Collect for 60 seconds
+start --duration=300    # Collect for 5 minutes
+```
+
+### Other
+```bash
+help                    # Show help
+help set-wifi          # Help for specific command
+reset-config           # Reset to defaults
+```
+
+---
+
+## Monitor Shortcuts
+
+| Key | Function |
+|-----|----------|
+| CTRL+R | Reset device |
+| CTRL+C | Exit monitor |
+
+---
+
+## WiFi Channels
+
+| Region | Channels |
+|--------|----------|
+| USA | 1-11 |
+| Europe | 1-13 |
+| Best (2.4GHz) | 1, 6, 11 |
+
+---
+
+## Common Workflows
+
+### Quick 30-Second Test
+```
+set-wifi --mode=sniffer --set-channel=6
+start --duration=30
+```
+
+### Station Mode Collection
+```
+set-wifi --mode=station --sta-ssid=YourWiFi --sta-password=YourPass
+start --duration=120
+```
+
+### Access Point Collection
+```
+set-wifi --mode=ap --ap-ssid=CSI_Lab --ap-password=test123
+set-traffic --frequency-hz=10
+start --duration=300
+```
+
+### Multi-Channel Survey
+```
+set-wifi --set-channel=1
+start --duration=60
+
+set-wifi --set-channel=6
+start --duration=60
+
+set-wifi --set-channel=11
+start --duration=60
+```
+
+---
+
+## Important Notes
+
+1. **Spaces in SSID/Password:** Use underscores (`_`) instead of spaces
+   - ✓ `My_WiFi_Network`
+   - ✗ `My WiFi Network`
+
+2. **Default Settings:**
+   - Mode: Sniffer
+   - Channel: 1
+   - CSI Features: All enabled
+   - Traffic: Disabled
+
+3. **WiFi Connection Issues:**
+   - Ensure target AP is running before using Station mode
+   - Try a different channel
+   - Reset with CTRL+R
+
+4. **No CSI Data?**
+   - Verify WiFi traffic exists on selected channel
+   - Check channel setting matches your network
+   - Try AP mode and connect another device
+
+---
+
+## Example: Full Lab Setup
+
+```bash
+# 1. Configure as AP with traffic generation
+set-wifi --mode=ap --ap-ssid=Lab_CSI --ap-password=lab123456 --max-connections=10
+
+# 2. Disable some CSI features (optional)
+set-csi --disable-stbc-htltf
+
+# 3. Enable traffic generation
+set-traffic --frequency-hz=20
+
+# 4. Verify configuration
+show-config
+
+# 5. Start collecting for 10 minutes
+start --duration=600
+```
+
+**Then connect other devices to "Lab_CSI" network to trigger CSI collection**
+
+---
+
+## Troubleshooting Quick Fixes
+
+| Problem | Solution |
+|---------|----------|
+| Device not responding | Press CTRL+R |
+| Can't type commands | Check for `> ` prompt |
+| WiFi won't connect | Try different channel, check credentials |
+| No CSI data | Check WiFi traffic exists on channel |
+| Permission denied | Run with sudo or add user to dialout group |
+
+---
+
+## File Location
+
+Full documentation: `/home/tuqa-saeed/Documents/42 Amman/Hackathons/ConnectedMotion/ESP32-C3_CSI_QUICK_START.md`
+
+Project: `/home/tuqa-saeed/Documents/42 Amman/Hackathons/ConnectedMotion/esp-csi-cli-rs/`
+
+---
+
+**Quick Command to View This Card:**
+```bash
+cat ESP32-C3_CSI_REFERENCE.txt
+```
